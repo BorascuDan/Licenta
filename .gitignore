@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+
+# IDE and editor configurations
+.idea/
+.vscode/
+
+# Environment variables
+.env
+.test.env
+
+# Uploads and keys
+public/uploads/
+keys/
+public/defaultDocuments/
+documents/
+
+# macOS system files
+.DS_Store
+
+# Coverage and history
+coverage/
+.history

@@ -1,0 +1,31 @@
+{
+  "name": "hechaton",
+  "version": "1.0.0",
+  "description": "CREATE TABLE: npx knex migrate:make alter_carts_table --knexfile knexfile.cjs",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "nodemon server.mjs",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage --forceExit",
+    "test_windows": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --forceExit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BorascuDan/Hechaton.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BorascuDan/Hechaton/issues"
+  },
+  "homepage": "https://github.com/BorascuDan/Hechaton#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "mysql2": "^3.14.0"
+  }
+}
