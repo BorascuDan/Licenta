@@ -10,16 +10,41 @@ export const getRandomVideos = async (req, res, next) => {
     try {
         // Fetch all videos from database
         const videos = await db('videos');
-        
+
         // Shuffle the videos array
         shufle(videos);
-        
+
         // Get the requested number of videos
         const result = videos.slice(0, limit);
 
+        const videoIds = result.map(v => v.id);
+        const likeCounts = await db('likes')
+            .whereIn('video_id', videoIds)
+            .select(
+                'video_id',
+                db.raw('SUM(CASE WHEN like_status = 1 THEN 1 ELSE 0 END) as likes'),
+                db.raw('SUM(CASE WHEN like_status = -1 THEN 1 ELSE 0 END) as dislikes')
+            )
+            .groupBy('video_id');
+
+
+        const likeMap = likeCounts.reduce((acc, row) => {
+            acc[row.video_id] = {
+                likes: parseInt(row.likes, 10) || 0,
+                dislikes: parseInt(row.dislikes, 10) || 0,
+            };
+            return acc;
+        }, {});
+
+        // 7. Attach likes/dislikes to each video in result
+        const finalResult = result.map(video => ({
+            ...video,
+            likes: likeMap[video.id]?.likes || 0,
+            dislikes: likeMap[video.id]?.dislikes || 0,
+        }));
         // Store result in res.locals for next middleware
-        res.locals.randomVideos = result;
-        
+        res.locals.randomVideos = finalResult;
+
         // Continue to next middleware
         next();
     } catch (error) {
@@ -66,9 +91,9 @@ export const getVideoDetails = async (req, res, next) => {
 
         // Get current user's like status for this video
         const userLike = await db('likes')
-            .where({ 
-                user_id: userId, 
-                video_id: videoId 
+            .where({
+                user_id: userId,
+                video_id: videoId
             })
             .select('like_status')
             .first();
@@ -90,3 +115,55 @@ export const getVideoDetails = async (req, res, next) => {
         return sendJsonResponse(res, false, 500, "Couldn't get video", null);
     }
 };
+
+export const uploadVideo = async (req, res) => {
+    const { title, description = '' } = req.body ?? {};
+
+    const thumbnailUrl = `/uploads/thumbnails/${req.files['thumbnail'][0].filename}`;
+    const videoUrl = `/uploads/videos/${req.files['video'][0].filename}`;
+    const uploaderId = req.user.id;
+    console.log(uploaderId)
+    try {
+
+        const result = {
+            title,
+            description,
+            user_id: uploaderId,
+            thumbnail_url: thumbnailUrl,
+            video_url: videoUrl
+        }
+
+        await db('videos')
+            .insert(result);
+
+        sendJsonResponse(res, true, 201, 'Video uploaded', title);
+
+    } catch (error) {
+        console.error(`Couldn't upload video. \n Error: ${error}`);
+        return sendJsonResponse(res, false, 500, "Couldn't upload video", null);
+    }
+}
+
+export const deleteVideo = async (req, res) => {
+    const { id } = req.params ?? {};
+    const userId = req.user.id;
+
+    try {
+        const title = await db('videos')
+            .where({ id: id })
+            .select('title');
+
+        const deleted = await db('videos')
+            .where({ id: id, user_id: userId })
+            .del();
+
+        if (!deleted) {
+            return sendJsonResponse(res, false, 403, 'Not authorized or video not found', null);
+        }
+
+        sendJsonResponse(res, true, 200, 'Video deleted', title);
+    } catch (error) {
+        console.error(`Couldn't delete video. \n Error: ${error}`);
+        return sendJsonResponse(res, false, 500, "Couldn't delete video", null);
+    }
+}

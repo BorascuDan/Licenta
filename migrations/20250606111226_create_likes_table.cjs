@@ -6,6 +6,8 @@ exports.up = function (knex) {
         table.integer('video_id').unsigned().references('id').inTable('videos').onDelete('CASCADE');
         table.tinyint('like_status')
         table.timestamp('upload_date').defaultTo(knex.fn.now());
+
+        table.unique(['user_id', 'video_id']);
     });
 };
 
