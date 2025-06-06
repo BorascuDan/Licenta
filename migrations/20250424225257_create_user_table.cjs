@@ -5,7 +5,8 @@ exports.up = function (knex) {
         table.string('username', 50).notNullable();
         table.string('email', 100).notNullable().unique();
         table.string('password', 100).notNullable();
-        table.timestamp('account_creation_date').defaultTo(knex.fn.now());
+        table.string('profile_pic_url');
+        table.string('backround_pic_url');
         table.timestamps(true, true);
     });
 };

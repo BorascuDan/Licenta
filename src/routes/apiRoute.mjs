@@ -1,11 +1,11 @@
 import { Router } from "express";
-import users from "./../endpoints/users.mjs"
+import auth from "../endpoints/authentication.mjs"
 
 //import componenta from "./../endpoints/componenta";
 const router = Router()
 
 //router.use('/name/', componenta);
-router.use('/users/', users);
+router.use('/auth/', auth);
 
 
 export default router;
