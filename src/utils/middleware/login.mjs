@@ -6,9 +6,10 @@ import jwt from "jsonwebtoken";
 
 export const registerUsers = async (req, res) => {
   try {
+
     const { username, email, password } = req.body ?? {};
 
-    if (!username || !email || !!password) sendJsonResponse(res, true, 400, 'All field are required', null)
+    if (!username || !email || !password) sendJsonResponse(res, true, 400, 'All field are required', null)
 
     const existingEmail = await db('users')
       .where({ email })
@@ -44,7 +45,7 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body ?? {};
 
-    if (!email || !!password) sendJsonResponse(res, true, 400, 'All field are required', null)
+    if (!email || !password) sendJsonResponse(res, true, 400, 'All field are required', null)
 
     const user = await db('users')
       .where({ email })
