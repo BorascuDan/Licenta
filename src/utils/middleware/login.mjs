@@ -29,6 +29,8 @@ export const registerUsers = async (req, res) => {
                     .select('id', 'username', 'email')
                     .where({ email });
 
+        
+
         sendJsonResponse(res, true, 200, 'Username registered', newUser);
     } catch (error) {
         console.error(error);

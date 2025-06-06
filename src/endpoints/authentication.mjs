@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUsers, loginUser, deleteUser, getDetails} from "../utils/middleware/login.mjs";
+import { registerUsers, loginUser, deleteUser} from "../utils/middleware/login.mjs";
 import { authenticateToken} from "../utils/utilFunction.mjs";
 
 const router = Router()

@@ -1,5 +1,5 @@
-import knex from 'knex';
-import knexConfig from './../../knexfile.cjs';
+import knex from "knex";
+import knexConfig from "./../../knexfile.cjs";
 
 let dbInstance = null;
 
