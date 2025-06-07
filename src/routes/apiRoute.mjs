@@ -4,6 +4,7 @@ import health from "../endpoints/health.mjs"
 import video from "../endpoints/videos.mjs"
 import likes from "../endpoints/likes.mjs";
 import history from "../endpoints/history.mjs";
+import profile from "../endpoints/profile.mjs";
 //import componenta from "./../endpoints/componenta";
 const router = Router()
 
@@ -13,6 +14,7 @@ router.use("/health", health);
 router.use("/video/", video);
 router.use("/likes/", likes);
 router.use("/history/", history)
+router.use("/profile/", profile)
 
 
 export default router;
