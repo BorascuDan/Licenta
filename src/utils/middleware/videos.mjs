@@ -6,18 +6,19 @@ import {
 
 export const getRandomVideos = async (req, res, next) => {
     const { limit = 3 } = req.body ?? {};
-
+    const user_id = req.user.id;
     try {
         // Fetch all videos from database
         const videos = await db('videos');
 
         // Shuffle the videos array
-        shufle(videos);
+        // shufle(videos);
 
         // Get the requested number of videos
         const result = videos.slice(0, limit);
 
         const videoIds = result.map(v => v.id);
+        
         const likeCounts = await db('likes')
             .whereIn('video_id', videoIds)
             .select(
@@ -52,6 +53,65 @@ export const getRandomVideos = async (req, res, next) => {
         return sendJsonResponse(res, false, 500, "Couldn't get videos", null);
     }
 };
+
+export const myRecomendedVideos = async (req, res, next) => {
+    const { limit = 10 } = req.body ?? {};
+    const user_id = req.user.id;
+    try {
+        const likes = await db('likes')
+            .where({ user_id, like_status: 1 })
+            .orderBy('upload_date', 'desc')
+            .limit(limit)
+            .select('video_id');
+            
+        const videoIds = likes.map(l => l.video_id);
+        
+        if (videoIds.length === 0) {
+            res.locals.randomVideos = [];  // store empty array if no liked videos
+            return next();
+        }
+       // add ml call
+        const videos = await db('videos').whereIn('id', videoIds);
+        
+
+        const likeCounts = await db('likes')
+            .whereIn('video_id', videoIds)
+            .select(
+                'video_id',
+                db.raw('SUM(CASE WHEN like_status = 1 THEN 1 ELSE 0 END) as likes'),
+                db.raw('SUM(CASE WHEN like_status = -1 THEN 1 ELSE 0 END) as dislikes')
+            )
+            .groupBy('video_id');
+
+        const likeMap = likeCounts.reduce((acc, row) => {
+            acc[row.video_id] = {
+                likes: parseInt(row.likes, 10) || 0,
+                dislikes: parseInt(row.dislikes, 10) || 0,
+            };
+            return acc;
+        }, {});
+
+        const orderedVideos = videoIds.map(id => {
+            const video = videos.find(v => v.id === id);
+            return {
+                ...video,
+                likes: likeMap[id]?.likes || 0,
+                dislikes: likeMap[id]?.dislikes || 0,
+            };
+        });
+
+        // Store result in res.locals for later middleware/route to use
+        res.locals.randomVideos = orderedVideos;
+
+        // Proceed to next middleware
+        next();
+
+    } catch (error) {
+        console.error(`Couldn't get videos. \n Error: ${error}`);
+        return sendJsonResponse(res, false, 500, "Couldn't get videos", null);
+    }
+};
+
 
 export const getVideoDetails = async (req, res, next) => {
     const videoId = req.params?.id;
