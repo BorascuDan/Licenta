@@ -98,12 +98,24 @@ export const getVideoDetails = async (req, res, next) => {
             .select('like_status')
             .first();
 
+            const comments = await db('comments as com')
+            .where({ 'com.video_id': videoId })
+            .leftJoin('users as use', 'com.user_id', 'use.id')
+            .select(
+                'use.id as user_id',
+                'use.username',
+                'use.profile_pic_url',
+                'com.comment',
+                'com.upload_date'
+            );
+        
         // Prepare the result object
         const result = {
             video,
             likes: likeCounts?.likes || 0,
             dislikes: likeCounts?.dislikes || 0,
             userLikeStatus: userLike?.like_status || 0,
+            comments
         };
 
         // Store result and continue to next middleware
@@ -119,8 +131,8 @@ export const getVideoDetails = async (req, res, next) => {
 export const uploadVideo = async (req, res) => {
     const { title, description = '' } = req.body ?? {};
 
-    const thumbnailUrl = `/uploads/thumbnails/${req.files['thumbnail'][0].filename}`;
-    const videoUrl = `/uploads/videos/${req.files['video'][0].filename}`;
+    const thumbnailUrl = `/thumbnails/${req.files['thumbnail'][0].filename}`;
+    const videoUrl = `/videos/${req.files['video'][0].filename}`;
     const uploaderId = req.user.id;
     console.log(uploaderId)
     try {

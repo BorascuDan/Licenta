@@ -5,6 +5,7 @@ import video from "../endpoints/videos.mjs"
 import likes from "../endpoints/likes.mjs";
 import history from "../endpoints/history.mjs";
 import profile from "../endpoints/profile.mjs";
+import comments from "../endpoints/comments.mjs"
 //import componenta from "./../endpoints/componenta";
 const router = Router()
 
@@ -15,6 +16,7 @@ router.use("/video/", video);
 router.use("/likes/", likes);
 router.use("/history/", history)
 router.use("/profile/", profile)
+router.use("/comments/", comments)
 
 
 export default router;

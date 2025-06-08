@@ -24,12 +24,13 @@ export const likes = async (req, res) => {
 }
 
 export const myLikes = async (req, res) => {
+    const { limit = 10 } = req.body ?? {};
     const user_id = req.user.id;
     try {
         const likes = await db('likes')
             .where({ user_id, like_status: 1 })
             .orderBy('upload_date', 'desc')
-            .limit(10)
+            .limit(limit)
             .select('video_id');
         const videoIds = likes.map(l => l.video_id);
         if (videoIds.length === 0) {

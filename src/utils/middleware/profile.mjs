@@ -5,8 +5,8 @@ import {
 } from "../utilFunction.mjs";
 
 export const profile = async (req, res) => {
-    const user_id = req.user.id;
-    
+    const user_id = req.body?.user_id ?? req.user.id;
+
     try {
         const user = await db('users')
             .where({ id: user_id })
@@ -64,7 +64,7 @@ export const profile = async (req, res) => {
 
 export const profilePicture = async (req, res) => {
     const user_id = req.user.id;
-    const profilePicUrl = `/uploads/profile_pics/${req.file.filename}`;
+    const profilePicUrl = `/profile_pics/${req.file.filename}`;
 
     try {
 
@@ -80,7 +80,7 @@ export const profilePicture = async (req, res) => {
 
 export const backroundPicture = async (req, res) => {
     const user_id = req.user.id;
-    const backgroundPicUrl = `/uploads/background_pics/${req.file.filename}`;
+    const backgroundPicUrl = `/background_pics/${req.file.filename}`;
 
     try {
         
