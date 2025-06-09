@@ -7,6 +7,6 @@ const router = Router()
 
 router.get("/",authenticateToken ,profile);
 router.put("/pic", authenticateToken, upload.single('profile_pic'), profilePicture);
-router.put("/background", authenticateToken, upload.single('profile_pic'), backroundPicture);
+router.put("/background", authenticateToken, upload.single('background_pic'), backroundPicture);
 
 export default router;

@@ -42,7 +42,7 @@ router.get("/me/:id", authenticateToken,  myRecomendedVideos, getVideoDetails, (
 });
 
 
-router.post("/uplad", authenticateToken, upload.fields([
+router.post("/upload", authenticateToken, upload.fields([
     { name: 'thumbnail', maxCount: 1 },
     { name: 'video', maxCount: 1 }
 ]) , uploadVideo);

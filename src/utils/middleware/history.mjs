@@ -27,23 +27,27 @@ export const history = async (req, res) => {
 }
 
 export const myHistory = async (req, res) => {
-    const { limit = 3 } = req.body ?? {};
+    const { limit = 10 } = req.body ?? {};
     const user_id = req.user.id;
+
     try {
+        // Step 1: Fetch watch history
         const history = await db('watch_history')
             .where({ user_id })
             .orderBy('watched_at', 'desc')
             .limit(limit)
-            .select('video_id');
+            .select('video_id', 'watched_at');
 
-        const videoIds = history.map(h => h.video_id);
-        if (videoIds.length === 0) {
+        if (history.length === 0) {
             return sendJsonResponse(res, true, 200, 'No watch history', []);
         }
 
+        const videoIds = history.map(h => h.video_id);
+
+        // Step 2: Fetch video details
         const videos = await db('videos').whereIn('id', videoIds);
 
-        // Step 3: Fetch like/dislike counts for these videos
+        // Step 3: Fetch like/dislike counts
         const likeCounts = await db('likes')
             .whereIn('video_id', videoIds)
             .select(
@@ -62,19 +66,22 @@ export const myHistory = async (req, res) => {
             return acc;
         }, {});
 
-        // Step 5: Preserve the watch order and attach like/dislike info
-        const orderedVideos = videoIds.map(id => {
-            const video = videos.find(v => v.id === id);
+        // Step 5: Preserve the watch order and attach like/dislike + watched_at info
+        const orderedVideos = history.map(h => {
+            const video = videos.find(v => v.id === h.video_id);
             return {
                 ...video,
-                likes: likeMap[id]?.likes || 0,
-                dislikes: likeMap[id]?.dislikes || 0,
+                watched_at: h.watched_at,
+                likes: likeMap[h.video_id]?.likes || 0,
+                dislikes: likeMap[h.video_id]?.dislikes || 0,
             };
         });
 
         // Final response
         sendJsonResponse(res, true, 200, 'Watch history retrieved', orderedVideos);
     } catch (error) {
-        sendJsonResponse(res, false, 500, error.message, null);
+        console.error(error);
+        sendJsonResponse(res, false, 500, 'Server error');
     }
+
 }

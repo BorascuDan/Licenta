@@ -16,6 +16,7 @@ export const authenticateToken = (req, res, next) => {
     
       if (err) {
         return sendJsonResponse(res, false, 403, "Invalid or expired token", null);
+        console.log('invalidule')
       }
       
       req.user = user;

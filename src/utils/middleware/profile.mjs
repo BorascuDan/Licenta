@@ -5,12 +5,12 @@ import {
 } from "../utilFunction.mjs";
 
 export const profile = async (req, res) => {
-    const user_id = req.body?.user_id ?? req.user.id;
+    const user_id = req.query?.user_id ?? req.user.id;
 
     try {
         const user = await db('users')
             .where({ id: user_id })
-            .select('id', 'username', 'email', 'profile_pic_url', 'backround_pic_url');
+            .select('id', 'username', 'email', 'profile_pic_url', 'backround_pic_url', 'created_at');
         
         if (!user) {
             return sendJsonResponse(res, false, 404, 'User not found', null);

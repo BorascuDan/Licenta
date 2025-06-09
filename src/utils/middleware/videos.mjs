@@ -5,8 +5,8 @@ import {
 } from "../utilFunction.mjs";
 
 export const getRandomVideos = async (req, res, next) => {
-    const { limit = 3 } = req.body ?? {};
-    const user_id = req.user.id;
+    const { limit = 10 } = req.body ?? {};
+
     try {
         // Fetch all videos from database
         const videos = await db('videos');
@@ -55,27 +55,55 @@ export const getRandomVideos = async (req, res, next) => {
 };
 
 export const myRecomendedVideos = async (req, res, next) => {
-    const { limit = 10 } = req.body ?? {};
+    const { precision = 3, limit = 5  } = req.body ?? {};
     const user_id = req.user.id;
     try {
         const likes = await db('likes')
             .where({ user_id, like_status: 1 })
             .orderBy('upload_date', 'desc')
-            .limit(limit)
+            .limit(precision)
             .select('video_id');
             
         const videoIds = likes.map(l => l.video_id);
         
         if (videoIds.length === 0) {
-            res.locals.randomVideos = [];  // store empty array if no liked videos
+            res.locals.randomVideos = [];
             return next();
         }
-       // add ml call
-        const videos = await db('videos').whereIn('id', videoIds);
-        
 
+        let recommendedVideoIds = [];
+        try {
+            const mlResponse = await fetch('http://localhost:5000/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    video_ids: videoIds,
+                    count: limit
+                })
+            });
+
+            if (!mlResponse.ok) {
+                throw new Error(`ML service responded with status: ${mlResponse.status}`);
+            }
+
+            recommendedVideoIds = await mlResponse.json();
+            console.log('ML recommendations:', recommendedVideoIds);
+
+        } catch (mlError) {
+            console.error('ML service error:', mlError);
+            recommendedVideoIds = videoIds.slice(0, limit);
+        }
+
+        const finalVideoIds = recommendedVideoIds.length > 0 ? recommendedVideoIds : videoIds.slice(0, limit);
+
+        shufle(finalVideoIds)
+
+        const videos = await db('videos').whereIn('id', finalVideoIds);
+        
         const likeCounts = await db('likes')
-            .whereIn('video_id', videoIds)
+            .whereIn('video_id', finalVideoIds)
             .select(
                 'video_id',
                 db.raw('SUM(CASE WHEN like_status = 1 THEN 1 ELSE 0 END) as likes'),
@@ -91,19 +119,21 @@ export const myRecomendedVideos = async (req, res, next) => {
             return acc;
         }, {});
 
-        const orderedVideos = videoIds.map(id => {
+        const orderedVideos = finalVideoIds.map(id => {
             const video = videos.find(v => v.id === id);
+            if (!video) {
+                console.warn(`Video with ID ${id} not found in database`);
+                return null;
+            }
             return {
                 ...video,
                 likes: likeMap[id]?.likes || 0,
                 dislikes: likeMap[id]?.dislikes || 0,
             };
-        });
+        }).filter(video => video !== null); 
 
-        // Store result in res.locals for later middleware/route to use
         res.locals.randomVideos = orderedVideos;
 
-        // Proceed to next middleware
         next();
 
     } catch (error) {
@@ -111,7 +141,6 @@ export const myRecomendedVideos = async (req, res, next) => {
         return sendJsonResponse(res, false, 500, "Couldn't get videos", null);
     }
 };
-
 
 export const getVideoDetails = async (req, res, next) => {
     const videoId = req.params?.id;
@@ -134,6 +163,12 @@ export const getVideoDetails = async (req, res, next) => {
         if (!video) {
             return sendJsonResponse(res, false, 404, 'Video not found', null);
         }
+
+        // Get uploader's details
+        const uploader = await db('users')
+            .where({ id: video.user_id })
+            .select('id', 'username', 'profile_pic_url')
+            .first();
 
         // Increment view count
         await db('videos')
@@ -158,7 +193,8 @@ export const getVideoDetails = async (req, res, next) => {
             .select('like_status')
             .first();
 
-            const comments = await db('comments as com')
+        // Get comments with commenter info
+        const comments = await db('comments as com')
             .where({ 'com.video_id': videoId })
             .leftJoin('users as use', 'com.user_id', 'use.id')
             .select(
@@ -168,9 +204,10 @@ export const getVideoDetails = async (req, res, next) => {
                 'com.comment',
                 'com.upload_date'
             );
-        
-        // Prepare the result object
+
+        // Prepare the result object with uploader info in `user` field
         const result = {
+            user: uploader, // uploader is now under 'user'
             video,
             likes: likeCounts?.likes || 0,
             dislikes: likeCounts?.dislikes || 0,
