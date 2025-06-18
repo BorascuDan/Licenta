@@ -12,7 +12,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: '*', // Or your frontend URL for better security
+  origin: '*',
   exposedHeaders: [
     'Authorization', 
     'X-Auth-Token',

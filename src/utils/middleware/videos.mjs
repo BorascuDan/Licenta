@@ -55,7 +55,7 @@ export const getRandomVideos = async (req, res, next) => {
 };
 
 export const myRecomendedVideos = async (req, res, next) => {
-    const { precision = 3, limit = 5  } = req.body ?? {};
+    const { precision = 4, limit = 5  } = req.body ?? {};
     const user_id = req.user.id;
     try {
         const likes = await db('likes')
@@ -97,6 +97,12 @@ export const myRecomendedVideos = async (req, res, next) => {
         }
 
         const finalVideoIds = recommendedVideoIds.length > 0 ? recommendedVideoIds : videoIds.slice(0, limit);
+
+        await db('users')
+            .where({ id: user_id })
+            .update({
+                recommended_videos: JSON.stringify(finalVideoIds)
+            });
 
         shufle(finalVideoIds)
 

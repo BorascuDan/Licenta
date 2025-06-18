@@ -6,6 +6,7 @@ import likes from "../endpoints/likes.mjs";
 import history from "../endpoints/history.mjs";
 import profile from "../endpoints/profile.mjs";
 import comments from "../endpoints/comments.mjs"
+import users from "../endpoints/users.mjs"
 //import componenta from "./../endpoints/componenta";
 const router = Router()
 
@@ -17,6 +18,7 @@ router.use("/likes/", likes);
 router.use("/history/", history)
 router.use("/profile/", profile)
 router.use("/comments/", comments)
+router.use("/users/", users)
 
 
 export default router;
