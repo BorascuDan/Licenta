@@ -101,7 +101,7 @@ export const myRecomendedVideos = async (req, res, next) => {
         await db('users')
             .where({ id: user_id })
             .update({
-                recommended_videos: JSON.stringify(finalVideoIds)
+                recommended_videos: JSON.stringify(finalVideoIds.join(","))
             });
 
         shufle(finalVideoIds)

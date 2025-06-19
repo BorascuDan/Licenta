@@ -3,7 +3,7 @@ import { authenticateToken} from "../utils/utilFunction.mjs";
 import { similarity } from "../utils/middleware/users.mjs";
 
 const router = Router()
-// authenticateToken 
-router.post("/",  similarity);
+
+router.post("/",  authenticateToken ,similarity);
 
 export default router;
